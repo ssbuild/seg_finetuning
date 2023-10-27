@@ -79,9 +79,7 @@ category_id must
 
 ## 参考
 
-https://arxiv.org/abs/2005.12872
 
-https://github.com/facebookresearch/detr
 
 ## Star History
 

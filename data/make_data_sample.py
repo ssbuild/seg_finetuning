@@ -24,7 +24,7 @@ class MyCocoDetection(CocoDetection):
 def build(coco_path,image_set,outfile,limit_n=-1):
     root = coco_path
     assert root.exists(), f'provided COCO path {root} does not exist'
-    mode = 'instances'
+    mode = 'panoptic'
     PATHS = {
         "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
         "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
@@ -37,10 +37,13 @@ def build(coco_path,image_set,outfile,limit_n=-1):
     with open(outfile,mode='w',encoding='utf-8') as f:
         for i in range(min(len(dataset),limit_n)):
             path,labels = dataset[i]
-            f.write(json.dumps({
-                "path": path,
-                "labels": labels
-            },ensure_ascii=False) + '\n')
+            print(path)
+            print(labels)
+            break
+            # f.write(json.dumps({
+            #     "path": path,
+            #     "labels": labels
+            # },ensure_ascii=False) + '\n')
 
 
 
@@ -50,4 +53,4 @@ data_dir = Path("/data/cv/data/coco")
 
 build(data_dir,"train","train.json",100)
 
-build(data_dir,"val","dev.json",20)
+# build(data_dir,"val","dev.json",20)

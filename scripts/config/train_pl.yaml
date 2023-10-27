@@ -22,6 +22,8 @@ devices: 1
 data_backend: parquet
 convert_onnx: false
 do_train: true
+
+convert_file: false
 train_file:
 - ../data/train.json
 max_epochs: 20
