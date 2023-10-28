@@ -12,7 +12,7 @@ from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.strategies import DeepSpeedStrategy
 from transformers import HfArgumentParser
 from data_utils import NN_DataHelper, train_info_args, get_deepspeed_config, global_args
-from aigc_zoo.model_zoo.object_detection.llm_model import MyTransformer, PetlArguments, LoraConfig, PromptArguments
+from aigc_zoo.model_zoo.semantic_segmentation.llm_model import MyTransformer, PetlArguments, LoraConfig, PromptArguments
 
 
 assert global_args["trainer_backend"] == "pl"

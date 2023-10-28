@@ -22,6 +22,12 @@ __all__ = [
 # See all SegFormer models at https://huggingface.co/models?filter=segformer
 
 MODELS_MAP = {
+    'mit-b0':{
+        'model_type': 'segformer',
+        'model_name_or_path': '/data/nlp/pre_models/torch/segformer/mit-b0',
+        'config_name': '/data/nlp/pre_models/torch/segformer/mit-b0/config.json',
+        'tokenizer_name': '/data/nlp/pre_models/torch/segformer/mit-b0',
+    },
     'segformer-b0-finetuned-ade-512-512': {
         'model_type': 'segformer',
         'model_name_or_path': '/data/nlp/pre_models/torch/segformer/segformer-b0-finetuned-ade-512-512',

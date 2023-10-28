@@ -1,6 +1,7 @@
 # @Time    : 2023/1/22 16:22
 # @Author  : tk
 # @FileName: data_utils.py
+import io
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__)))
@@ -18,7 +19,7 @@ from deep_training.utils.hf import BatchFeatureDetr
 from typing import Union, Optional, List, Any
 from deep_training.data_helper import DataHelper, ModelArguments, TrainingArguments, TrainingArgumentsHF, \
     TrainingArgumentsCL, DataArguments, TrainingArgumentsAC
-from aigc_zoo.model_zoo.object_detection.llm_model import PetlArguments, LoraConfig, PromptArguments
+from aigc_zoo.model_zoo.semantic_segmentation.llm_model import PetlArguments, LoraConfig, PromptArguments
 from fastdatasets.record import load_dataset as Loader, RECORD, WriterObject, gfile
 from transformers import PreTrainedTokenizer, HfArgumentParser, PretrainedConfig, Wav2Vec2Processor, requires_backends
 from config import *
@@ -47,100 +48,9 @@ class NN_DataHelper(DataHelper):
         super(NN_DataHelper, self).__init__(*args, **kwargs)
 
     def on_get_labels(self, files: List[str]):
-        label2id = {
-            "N/A": 0,
-            "airplane": 5,
-            "apple": 53,
-            "backpack": 27,
-            "banana": 52,
-            "baseball bat": 39,
-            "baseball glove": 40,
-            "bear": 23,
-            "bed": 65,
-            "bench": 15,
-            "bicycle": 2,
-            "bird": 16,
-            "blender": 83,
-            "boat": 9,
-            "book": 84,
-            "bottle": 44,
-            "bowl": 51,
-            "broccoli": 56,
-            "bus": 6,
-            "cake": 61,
-            "car": 3,
-            "carrot": 57,
-            "cat": 17,
-            "cell phone": 77,
-            "chair": 62,
-            "clock": 85,
-            "couch": 63,
-            "cow": 21,
-            "cup": 47,
-            "desk": 69,
-            "dining table": 67,
-            "dog": 18,
-            "donut": 60,
-            "door": 71,
-            "elephant": 22,
-            "eye glasses": 30,
-            "fire hydrant": 11,
-            "fork": 48,
-            "frisbee": 34,
-            "giraffe": 25,
-            "hair drier": 89,
-            "handbag": 31,
-            "hat": 26,
-            "horse": 19,
-            "hot dog": 58,
-            "keyboard": 76,
-            "kite": 38,
-            "knife": 49,
-            "laptop": 73,
-            "microwave": 78,
-            "mirror": 66,
-            "motorcycle": 4,
-            "mouse": 74,
-            "orange": 55,
-            "oven": 79,
-            "parking meter": 14,
-            "person": 1,
-            "pizza": 59,
-            "plate": 45,
-            "potted plant": 64,
-            "refrigerator": 82,
-            "remote": 75,
-            "sandwich": 54,
-            "scissors": 87,
-            "sheep": 20,
-            "shoe": 29,
-            "sink": 81,
-            "skateboard": 41,
-            "skis": 35,
-            "snowboard": 36,
-            "spoon": 50,
-            "sports ball": 37,
-            "stop sign": 13,
-            "street sign": 12,
-            "suitcase": 33,
-            "surfboard": 42,
-            "teddy bear": 88,
-            "tennis racket": 43,
-            "tie": 32,
-            "toaster": 80,
-            "toilet": 70,
-            "toothbrush": 90,
-            "traffic light": 10,
-            "train": 7,
-            "truck": 8,
-            "tv": 72,
-            "umbrella": 28,
-            "vase": 86,
-            "window": 68,
-            "wine glass": 46,
-            "zebra": 24
-        }
-        id2label = {i: label for label,i in label2id.items()}
+        with open(files[0],mode='r',encoding='utf-8') as f:
+            id2label = json.loads(f.read())
+        label2id= {label: i for i,label in id2label.items()}
         return label2id, id2label
 
     def load_config(self,
@@ -184,6 +94,11 @@ class NN_DataHelper(DataHelper):
             "return_dict": return_dict,
             "task_specific_params": task_specific_params,
         }
+
+        if with_labels and self.label2id is not None:
+            kwargs_args['label2id'] = self.label2id
+            kwargs_args['id2label'] = self.id2label
+            kwargs_args['num_labels'] = len(self.label2id) if self.label2id is not None else None
         kwargs_args.update(config_kwargs)
 
         config = load_configure(config_name=config_name or model_args.config_name,
@@ -256,24 +171,35 @@ class NN_DataHelper(DataHelper):
             D.extend(self._get_paragraph(lines))
         return D
 
+    # def collate_fn(self, batch):
+    #     batch = copy.copy(batch)
+    #     images,annotations = [],[]
+    #     for feature in batch:
+    #         path = str(feature["path"], encoding="utf-8") if isinstance(feature["path"],bytes) else feature["path"]
+    #         annotation = str(feature["labels"], encoding="utf-8") if isinstance(feature["labels"], bytes) else feature["labels"]
+    #         images.append(Image.open(path).convert("RGB"))
+    #         annotations.append(json.loads(annotation))
+    #     inputs = self.processor(images=images, annotations=annotations, return_tensors="pt")
+    #     return BatchFeatureDetr(inputs.data)
+
+
     def collate_fn(self, batch):
         batch = copy.copy(batch)
         images,annotations = [],[]
         for feature in batch:
-            path = str(feature["path"][0], encoding="utf-8") if isinstance(feature["path"][0],bytes) else feature["path"][0]
-            annotation = str(feature["labels"][0], encoding="utf-8") if isinstance(feature["labels"][0], bytes) else feature["labels"][0]
-            images.append(Image.open(path).convert("RGB"))
-            annotations.append(json.loads(annotation))
-        inputs = self.processor(images=images, annotations=annotations, return_tensors="pt")
-
-        return BatchFeatureDetr(inputs.data)
+            pixel_values = feature[ "pixel_values.bytes" ]
+            label = feature[ "label.bytes" ]
+            images.append(Image.open(io.BytesIO(pixel_values)))
+            annotations.append(Image.open(io.BytesIO(label)))
+        inputs = self.processor(images=images, segmentation_maps=annotations, return_tensors="pt")
+        return inputs
 
     def make_dataset_all(self):
         data_args = self.data_args
         # schema for arrow parquet
         schema = {
-            "path": "binary_list",
-            "labels": "binary_list",
+            "path": "bytes",
+            "labels": "bytes",
         }
 
         # 缓存数据集
