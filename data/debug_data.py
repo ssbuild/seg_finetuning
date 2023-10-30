@@ -3,10 +3,10 @@
 # @Author: tk
 # @File：debug_data
 import io
-
 from PIL import Image
 from fastdatasets.parquet.dataset import load_dataset
 
+# 数据下载 sidewalk-semantic https://huggingface.co/datasets/segments/sidewalk-semantic
 ds = load_dataset.RandomDataset("d:\\tmp\\train-00000-of-00001.parquet")
 
 for i in range(len(ds)):
