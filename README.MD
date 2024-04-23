@@ -1,5 +1,6 @@
 ```text
-    10-24 initial semantic segmentation
+    2024-04-22 简化
+    2023-10-24 initial semantic segmentation
 ```
 
 ## update information

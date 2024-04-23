@@ -12,8 +12,8 @@ import torch
 from PIL import Image
 from deep_training.data_helper import ModelArguments
 from transformers import HfArgumentParser
-from data_utils import train_info_args, NN_DataHelper, get_deepspeed_config
-from aigc_zoo.model_zoo.semantic_segmentation.llm_model import MyTransformer
+from data_utils import config_args, NN_DataHelper, get_deepspeed_config
+from deep_training.zoo.model_zoo.semantic_segmentation.llm_model import MyTransformer
 
 
 deep_config = get_deepspeed_config()
@@ -21,7 +21,7 @@ deep_config = get_deepspeed_config()
 
 if __name__ == '__main__':
     parser = HfArgumentParser((ModelArguments,))
-    (model_args,)  = parser.parse_dict(train_info_args, allow_extra_keys=True)
+    (model_args,)  = parser.parse_dict(config_args, allow_extra_keys=True)
 
     dataHelper = NN_DataHelper(model_args)
     tokenizer, config, _,_= dataHelper.load_tokenizer_and_config()
